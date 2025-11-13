@@ -3,7 +3,133 @@ title: "Assessment"
 output: html_document
 ---
 
+Working from home backlash: pain management trends 
+
+the question posed focuses on the "Working from Home" (WFH) dilemma/ hypothesis.This hypothesis proposes that the mass shift to remote work created a new wave of physical ailments, which in turn, would increase demand for specific drugs. 
+
+The aim is to investogate whether the shift to remote working during the COVID-19 pandemic led to a detectable increase in perscriptions in musculoskeletal pain relieving drugs, specifically the use of non-steroidal anti-inflammatory drugs and musculoskeletal (MSK) drugs, in Scotland.
+
+
 ```{r}
-library(tidyverse)
+# Data loading 
+# To ensure decent reproducibility without requiring 
+# manual file downloads, we load the directly from their URLS
+# on the PHS Open Data portal
 ```
+
+
+```{r}
+# we use the tidyverse for all data wrangling (dplyr, ggplot2, purrr, readr
+# and data analysis 
+library(tidyverse)
+
+# data.table is used for its fread() function which is exceptionally 
+# fast at reading large CSV files, especially from a URL 
+library(data.table)
+
+# lubridate is good for reliable data collection
+library(lubridate)
+
+library(janitor)
+```
+
+
+
+```{r}
+# --- 2. LOAD AND WRANGLE DATA ---
+
+# A vector of all the file URLs we want to analyze (Mar 2019 - Feb 2021)
+file_urls <- c(
+  "https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/87b21840-beb8-40fd-bad8-579643bc8b8b/download/pitc201903.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/02197246-5d98-4ba9-b25d-218ac9cd91e6/download/pitc201904.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/7479536b-0b95-43d6-9152-31bbd522e6b4/download/pitc201905.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/6ea2f299-76bc-49cd-ab43-9228b601da5f/download/pitc201906.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/6e3856e9-88cb-495a-8c8a-54b0460df950/download/pitc201907.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/5c667230-4201-4a09-949d-3e6cc3a4ec19/download/pitc201908.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/ab3c15a9-44da-4a85-bb7a-58a8ce11f3d8/download/pitc201909.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/55d93898-5382-4a59-a42e-bbc68f48b217/download/pitc201910.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/eeee4a8f-3439-425a-aacd-58e536da90a0/download/pitc201911.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/fa276ad2-669a-472f-9c47-809f199fae21/download/pitc201912.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/e5c841f2-3e16-428b-97db-0798ec7a5fb4/download/pitc202001.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/af121e7c-4124-4955-92e9-a9580ccd469e/download/pitc202002.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/9581bd8d-5568-4462-93a6-6d7bfbbe7cbc/download/pitc202003.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/9cdc0526-21ab-43de-b832-bc032cd31b24/download/pitc202004.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/f2ffa7b3-3f93-470a-8125-880afb9aafe0/download/pitc202005.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/64131d22-ab47-43ff-9674-ebe8ed7edbd7/download/pitc202006.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/80b6ddb1-f09b-4d76-9927-da1e118b01ff/download/pitc202007.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/5fd5f56e-d1d2-4f22-b4f7-224fbd50dca3/download/pitc202008.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/e1b0cfdd-d184-4ebc-bd93-f1a10d84ead0/download/pitc202009.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/83bf4892-d246-41f8-a6ca-d44d18e2a2ca/download/pitc202010.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/ab8aa642-2562-4abb-a360-5c5f9e7e349c/download/pitc202011.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/0c033702-4d88-4f2d-989c-a709b1f4529e/download/pitc202012.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/7722a6e6-a6b6-49ec-aa63-fdc4bc727f05/download/pitc202101.csv",
+"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/3f5c55ac-1bcd-4c57-a7b6-12911f15239c/download/pitc202102.csv"
+)
+
+# Use `purrr::map_dfr` to apply the fread function to every URL in our list
+raw_data_cleaned <- map_dfr(file_urls, ~ read_csv(.x, show_col_types = FALSE) %>%
+   janitor::clean_names())
+
+
+# this is the data wrangling part 
+# Now we use the clean, standardized column names (which will be
+# `paid_date_month` and `bnf_item_code`).
+summary_data <- raw_data_cleaned %>%
+  
+  # 1. Filter for our "basket" of NSAID drugs
+  # The BNF code for NSAIDs is 10.1.1. We filter for all items
+  # where the `bnf_item_code` starts with "100101".
+  filter(str_starts(bnf_item_code, "100101")) %>%
+  
+  # 2. Convert the integer `paid_date_month` (e.g., 202003) into a
+  # proper date format that ggplot2 can understand.
+  # We add "01" for the day and use `ymd()` from lubridate.
+  mutate(Month = ymd(paste0(paid_date_month, "01"))) %>%
+  
+  # 3. Group by our new Month column
+  group_by(Month) %>%
+  
+  # 4. Count the number of prescription items for each month
+  summarise(TotalItems = n()) %>%
+  
+  # 5. Arrange by month just to be safe
+  arrange(Month)
+
+# Print the final, small data frame to check our work
+print(summary_data)
+
+```
+
+
+2. Data visualisation stage 
+
+
+
+```{r}
+# A time-series line graph using ggplot2 
+
+ggplot(summary_data, aes( x = Month, y = TotalItems)) + 
+  geom_line(colour = "Blue", linewidth = 1) + 
+  geom_vline(
+    xintercept = as.Date("2020-03-23"),
+    linetype = "dashed", 
+    colour = "red",
+    linewidth = 1) + 
+  geom_point(colour = "0072B2") + 
+  scale_y_continuous(labels = scales::comma) + 
+  scale_x_date(date_breaks = "3 months", date_labels = "%b %Y") + 
+  labs(
+    title = "Monthly NSAID & MSK Drug Prescriptions in Scotland (2019-2021)", 
+    subtitle = "Red dashed line indicates start of Lockdown (March 23, 2020)",
+    y = "Total monthly Prescription items", 
+    x = "Month", 
+    caption = " Data Source: Public Health Scotland Open Data"
+  )
+  
+```
+
+The aforementioned hypothesis posits that the rapid shift to remote work caused by a wave of new MSK ailments due to poor ergonomic setups like working from sofas or kitchen tables. The backlash of new back pain and neck pain should have theoretically driven a rise in NSAID and MSK drug prescriptions after the initial 2020 GP access dip. However, since the data simply returns to a 2019 baseline without a major spike, this effect is not visible.
+
+My next steps are to confirm if this visual trend is accurate. I plan to join this data with GP practice register to see if the trend is more pronounced in urban versus rural areas. I think it would be appropriate to also compare this trend to a control group of drugs (unrelated to musculoskeletal pain relievers), that will be determined later.
+
 
