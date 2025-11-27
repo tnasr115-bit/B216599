@@ -358,7 +358,7 @@ display: none;
 hypothesis.This hypothesis proposes that the mass shift to remote work
 created a new wave of physical ailments, which in turn, would increase
 demand for specific drugs.</p>
-<p>The aim is to investogate whether the shift to remote working during
+<p>The aim is to investigate whether the shift to remote working during
 the COVID-19 pandemic led to a detectable increase in perscriptions in
 musculoskeletal pain relieving drugs, specifically the use of
 non-steroidal anti-inflammatory drugs and musculoskeletal (MSK) drugs,
@@ -367,50 +367,26 @@ in Scotland.</p>
 # To ensure decent reproducibility without requiring 
 # manual file downloads, we load the directly from their URLS
 # on the PHS Open Data portal</code></pre>
-<pre class="r"><code># we use the tidyverse for all data wrangling (dplyr, ggplot2, purrr, readr
+<pre class="r"><code># the code in the {r} bracket to switch off the display of messages and warnings to avoid crowding 
+
+
+# we use the tidyverse for all data wrangling (dplyr, ggplot2, purrr, readr
 # and data analysis 
-library(tidyverse)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.2
-## ✔ ggplot2   4.0.0     ✔ tibble    3.3.0
-## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-## ✔ purrr     1.1.0     
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
-## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-<pre class="r"><code># data.table is used for its fread() function which is exceptionally 
+library(tidyverse)
+
+# data.table is used for its fread() function which is exceptionally 
 # fast at reading large CSV files, especially from a URL 
-library(data.table)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;data.table&#39;
-## 
-## The following objects are masked from &#39;package:lubridate&#39;:
-## 
-##     hour, isoweek, mday, minute, month, quarter, second, wday, week,
-##     yday, year
-## 
-## The following objects are masked from &#39;package:dplyr&#39;:
-## 
-##     between, first, last
-## 
-## The following object is masked from &#39;package:purrr&#39;:
-## 
-##     transpose</code></pre>
-<pre class="r"><code># lubridate is good for reliable data collection
+library(data.table)
+
+# lubridate is good for reliable data collection
 library(lubridate)
 
 library(janitor)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;janitor&#39;
-## 
-## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     chisq.test, fisher.test</code></pre>
-<pre class="r"><code># --- 2. LOAD AND WRANGLE DATA ---
+<pre class="r"><code>#the code above essentially runs the code but do not show the loading packages or any unwanted messages in the final PDF/HTML 
 
-# A vector of all the file URLs we want to analyze (Mar 2019 - Feb 2021)
+# --- 2. LOAD AND WRANGLE DATA ---
+
+# A vector of all the file URLs  want to analyze (Mar 2019 - Feb 2021)
 file_urls &lt;- c(
   &quot;https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/87b21840-beb8-40fd-bad8-579643bc8b8b/download/pitc201903.csv&quot;,
 &quot;https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/02197246-5d98-4ba9-b25d-218ac9cd91e6/download/pitc201904.csv&quot;,
@@ -467,22 +443,7 @@ summary_data &lt;- raw_data_cleaned %&gt;%
   # 5. Arrange by month just to be safe
   arrange(Month)
 
-# Print the final, small data frame to check our work
-print(summary_data)</code></pre>
-<pre><code>## # A tibble: 24 × 2
-##    Month      TotalItems
-##    &lt;date&gt;          &lt;int&gt;
-##  1 2019-03-01      17126
-##  2 2019-04-01      16999
-##  3 2019-05-01      17218
-##  4 2019-06-01      16728
-##  5 2019-07-01      16914
-##  6 2019-08-01      16909
-##  7 2019-09-01      16629
-##  8 2019-10-01      17092
-##  9 2019-11-01      16671
-## 10 2019-12-01      16877
-## # ℹ 14 more rows</code></pre>
+# Print the final, small data frame to check work if you wish to confirm the data is correct </code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Data visualisation stage</li>
 </ol>
