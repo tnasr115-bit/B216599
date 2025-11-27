@@ -1,26 +1,24 @@
 ---
 title: "Assessment"
-output: html_document
+output:
+  html_document: default
 ---
 
 Working from home backlash: pain management trends 
 
-the question posed focuses on the "Working from Home" (WFH) dilemma/ hypothesis.This hypothesis proposes that the mass shift to remote work created a new wave of physical ailments, which in turn, would increase demand for specific drugs. 
+Introduction
+My data exploration investigates the "Working from Home" backlash hypothesis. The focus is to determine if the rapid shift to remote work during the COVID-19 pandemic led to a detectable change in prescriptions for musculoskeletal (MSK) pain relievers, specifically Non-Steroid Anti-inflammatory (NSAID) drugs in Scotland. 
 
-The aim is to investigate whether the shift to remote working during the COVID-19 pandemic led to a detectable increase in perscriptions in musculoskeletal pain relieving drugs, specifically the use of non-steroidal anti-inflammatory drugs and musculoskeletal (MSK) drugs, in Scotland.
+Background & Hypothesis:
+Research suggests the sudden transition to remote work forced many employees to work from non-ergonomic environments, leading to increased reports of lower back and neck pain (Guler et al., 2021). Furthermore, the lack of proper office equipment and psychosocial risks associated with telework have been directly linked to a rise in musculoskeletal problems (El Kadri Filho and Roberto de Lucca, 2022). This occurrence in this report will be referred to as the WFH backlash, this information suggests that a rise in pain management prescriptions will be observed. 
 
-
-```{r}
-# Data loading 
-# To ensure decent reproducibility without requiring 
-# manual file downloads, we load the directly from their URLS
-# on the PHS Open Data portal
-```
+Nevertheless, this potential rise conflicts with the reality of pandemic healthcare. Studies of UK primary care records indicate a substantial drop in face-to-face MSK consultations during the lockdown due to restricted access (Welsh et al., 2023). My analysis aims to address these conflicting forces: the increased physical strain of WFH versus the decreased access to general practice (GP) services. 
 
 
-```{r load-libraries, message=FALSE, warning=FALSE}
+```{r load-main-data, message=FALSE, warning=FALSE}
 # the code in the {r} bracket to switch off the display of messages and warnings to avoid crowding 
 
+# Part 1 - loading libraries
 
 # we use the tidyverse for all data wrangling (dplyr, ggplot2, purrr, readr
 # and data analysis 
@@ -33,56 +31,46 @@ library(data.table)
 # lubridate is good for reliable data collection
 library(lubridate)
 
+#this package helps clean messy data, particularly by fixing column names
 library(janitor)
 ```
 
 
+```{r load-ref-links, message=FALSE, warning=FALSE}
+#the code in the {r} bracket above essentially runs the code but does not show the loading packages or any unwanted messages in the final PDF/HTML 
 
-```{r load-data, message=FALSE, warning=FALSE}
-#the code above essentially runs the code but do not show the loading packages or any unwanted messages in the final PDF/HTML 
+  # 2. Load and wrangle data
 
-# --- 2. LOAD AND WRANGLE DATA ---
+# a list of URLs from an external CSV file in excel with all the URLS has been created as opposed to listing them individually in order to not crowd the report with URLS with the first word link being used select in order to access the data the urls have been obtained from Public Health Scotland 
+# PLEASE NOTE!: In order to replicate this 
+# obtain the external links from Public Health Scotland Website: https://www.opendata.nhs.scot/dataset/prescriptions-in-the-community
+# to obtain the exact results copy the URLs of the CSV files from March 2019 until February 2021 
+# open an Excel spreadsheet
+# then make sure to type 'link'  in A1, this serves as the variable name that R will use to identify the column 
+# The spreadsheet was saved as a CSV (Comma Delimited) to ensure can be read via the 'read_csv' function 
+# The links should be placed below from A2 through A25 these links in order so you can progress into loading and wrangling the data
+
 
 # A vector of all the file URLs  want to analyze (Mar 2019 - Feb 2021)
-file_urls <- c(
-  "https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/87b21840-beb8-40fd-bad8-579643bc8b8b/download/pitc201903.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/02197246-5d98-4ba9-b25d-218ac9cd91e6/download/pitc201904.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/7479536b-0b95-43d6-9152-31bbd522e6b4/download/pitc201905.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/6ea2f299-76bc-49cd-ab43-9228b601da5f/download/pitc201906.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/6e3856e9-88cb-495a-8c8a-54b0460df950/download/pitc201907.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/5c667230-4201-4a09-949d-3e6cc3a4ec19/download/pitc201908.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/ab3c15a9-44da-4a85-bb7a-58a8ce11f3d8/download/pitc201909.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/55d93898-5382-4a59-a42e-bbc68f48b217/download/pitc201910.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/eeee4a8f-3439-425a-aacd-58e536da90a0/download/pitc201911.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/fa276ad2-669a-472f-9c47-809f199fae21/download/pitc201912.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/e5c841f2-3e16-428b-97db-0798ec7a5fb4/download/pitc202001.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/af121e7c-4124-4955-92e9-a9580ccd469e/download/pitc202002.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/9581bd8d-5568-4462-93a6-6d7bfbbe7cbc/download/pitc202003.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/9cdc0526-21ab-43de-b832-bc032cd31b24/download/pitc202004.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/f2ffa7b3-3f93-470a-8125-880afb9aafe0/download/pitc202005.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/64131d22-ab47-43ff-9674-ebe8ed7edbd7/download/pitc202006.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/80b6ddb1-f09b-4d76-9927-da1e118b01ff/download/pitc202007.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/5fd5f56e-d1d2-4f22-b4f7-224fbd50dca3/download/pitc202008.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/e1b0cfdd-d184-4ebc-bd93-f1a10d84ead0/download/pitc202009.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/83bf4892-d246-41f8-a6ca-d44d18e2a2ca/download/pitc202010.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/ab8aa642-2562-4abb-a360-5c5f9e7e349c/download/pitc202011.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/0c033702-4d88-4f2d-989c-a709b1f4529e/download/pitc202012.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/7722a6e6-a6b6-49ec-aa63-fdc4bc727f05/download/pitc202101.csv",
-"https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/3f5c55ac-1bcd-4c57-a7b6-12911f15239c/download/pitc202102.csv"
-)
+links_data <- read_csv(here::here("docs", "data", "links_data.csv"), show_col_types = FALSE) 
 
-# Use `purrr::map_dfr` to apply the fread function to every URL in our list
-raw_data_cleaned <- map_dfr(file_urls, ~ read_csv(.x, show_col_types = FALSE) %>%
-   janitor::clean_names())
+# Extract the link column as a simple vector 
+# we use pull to turn the data frame column into a list of text strings 
+file_urls <- links_data %>% 
+  select(link) %>% 
+  pull() 
 
+# Use `purrr::map_dfr` to apply the fread function to every URL in our list double colons '::' are used to state that we wish use this specific function from the janitor package, show_col_types = FALSE ensures that there is no cluttered / unnecessary data being shown 
+raw_data_cleaned <- map_dfr(file_urls, ~ read_csv(.x, show_col_types = FALSE) %>% 
+                              janitor::clean_names())
 
 # this is the data wrangling part 
 # Now we use the clean, standardized column names (which will be
 # `paid_date_month` and `bnf_item_code`).
 summary_data <- raw_data_cleaned %>%
   
-  # 1. Filter for our "basket" of NSAID drugs
-  # The BNF code for NSAIDs is 10.1.1. We filter for all items
+  # 1. Filter for our "basket" of NSAID and MSK drugs
+  # The BNF code for NSAIDs and MSKs is 10.1.1. We filter for all items
   # where the `bnf_item_code` starts with "100101".
   filter(str_starts(bnf_item_code, "100101")) %>%
   
@@ -100,17 +88,12 @@ summary_data <- raw_data_cleaned %>%
   # 5. Arrange by month just to be safe
   arrange(Month)
 
-# Print the final, small data frame to check work if you wish to confirm the data is correct 
-
-
+# Optional: Print the final, small data frame to check work if you wish to confirm the data is correct 
 ```
 
-
 2. Data visualisation stage 
-
-
-
 ```{r}
+# 2 Data visualisation 
 
 # A time-series line graph using ggplot2 
 
@@ -119,23 +102,372 @@ ggplot(summary_data, aes( x = Month, y = TotalItems)) +
   geom_vline(
     xintercept = as.Date("2020-03-23"),
     linetype = "dashed", 
-    colour = "red",
+    colour = "red", # the linetype and red colour makes it distinct
     linewidth = 1) + 
-  geom_point(colour = "0072B2") + 
+  geom_point(colour = "black") + # each point is coloured black
   scale_y_continuous(labels = scales::comma) + 
+  #every point on the x axes will be split by 3 months
   scale_x_date(date_breaks = "3 months", date_labels = "%b %Y") + 
+  # the labs section is just labeling the graph itself
   labs(
     title = "Monthly NSAID & MSK Drug Prescriptions in Scotland (2019-2021)", 
     subtitle = "Red dashed line indicates start of Lockdown (March 23, 2020)",
     y = "Total monthly Prescription items", 
     x = "Month", 
     caption = " Data Source: Public Health Scotland Open Data"
-  )
-  
+  ) 
 ```
 
 The aforementioned hypothesis posits that the rapid shift to remote work caused by a wave of new MSK ailments due to poor ergonomic setups like working from sofas or kitchen tables. The backlash of new back pain and neck pain should have theoretically driven a rise in NSAID and MSK drug prescriptions after the initial 2020 GP access dip. However, since the data simply returns to a 2019 baseline without a major spike, this effect is not visible.
 
 My next steps are to confirm if this visual trend is accurate. I plan to join this data with GP practice register to see if the trend is more pronounced in urban versus rural areas. I think it would be appropriate to also compare this trend to a control group of drugs (unrelated to musculoskeletal pain relievers), that will be determined later.  
 
+```{r create-lookup, message=FALSE}
+# Part 3.0 
+#PLEASE NOTE!: 
+# Here are the links to post in their respective sections as explained below
+# Urban Rural link: https://www.opendata.nhs.scot/dataset/a7acd6f7-8f50-4433-b952-cee6807d0ff6/resource/c8bd76cd-6613-4dd7-8a28-6c99a16dc678/download/datazone2011_urban_rural_2020_15092022.csv
+# GP practice names: https://www.opendata.nhs.scot/dataset/gp-practice-contact-details-and-list-sizes/resource/42fd7367-b61f-448c-a268-2a6192c7df8d
+# To organise the auxiliary datasets (GP practice Details and Urban/Rural)  Classification), I created a separate metadata file named reference_links.csv
+# 1. Data entry In the first row, I created two column headers: 'dataset_name' in cell A1 and link in cell B1
 
+# 2.Data entry: In row 2, I entered 'gp_practices' under the name column and pasted the direct URL for the January 2021 GP Practice Contact Details CSV file 
+# . In row 2, I entered urban_rural under name column and pasted the direct URL for the Scottish Government Urban Rural Classification 2020 
+#  In row 3, I entered 'urban_rural' under the name column and pasted the direct URL for the Scottish Government Urban rural classification 2020 (Data Zone 2011) CSV file 
+
+# 3. The file was saved as a CSV (Comma Delimited) file in the docs/data folder, allowing the script to dynamically lookup and download the correct reference files by name  
+
+
+# Same process but with GP practice name and area classification 
+# Reading the reference link file from our external CSV file
+refs <- read_csv(here::here("docs", "data", "reference_links.csv"))
+
+# extract the GP url 
+gp_url <- refs %>% 
+  filter(dataset_name == "gp_practices") %>% 
+  pull(link) 
+
+# time to load the data 
+gp_data <- read_csv(gp_url) %>% 
+  janitor::clean_names()
+```
+
+```{r load-gp-urban-data, message=FALSE, warning=FALSE}
+# 3.1 Load reference data 
+
+# Load the file containing the reference data links, to clarify the show_col_types = FALSE function is to ensure that the data that we are loading does not clutter the html especially when we have to knit the document 
+
+ref_links <- read_csv(here::here("docs", "data", "reference_links.csv"), show_col_types = FALSE)
+
+# 1. Now we are going to obtain the GP practice data 
+# filter the list for the "gp_practices" row and pull the link
+gp_url <- ref_links %>% 
+  filter(dataset_name == "gp_practices") %>% 
+  pull(link) 
+
+# load the data and clean names immediately 
+gp_data <- read_csv(gp_url, show_col_types = FALSE) %>% 
+  janitor::clean_names()
+
+# 2. time to get the Urban/Rural Classification Data 
+# Filter for the 'urban_rural' row and pull the link
+ur_url <- ref_links %>% 
+  filter(dataset_name == "urban_rural") %>% 
+  pull(link)
+
+#load the data and clean names
+ur_data <- read_csv(ur_url, show_col_types = FALSE) %>% 
+  janitor::clean_names()
+
+#check the column (so we know what to join by)
+print("GP Data Columns:")
+names(gp_data)
+
+print("Urban/Rural Data Columns:")
+names(ur_data) 
+```
+This part is necessary in order to identify which data columns we want to utilise for later in the report.
+
+```{r load-lookup, message=FALSE, warning=FALSE}
+# 4. create GP lookup table 
+
+# we join the GP data with Urban/Rural data using 'data_zone' as the key. 
+# this gives us a master table linking every Practice Code to its Urban/Rural category. 
+
+gp_lookup <- gp_data %>% 
+  #join the urban/rural data onto the GP data
+  left_join(ur_data, by = "data_zone") %>% 
+  
+  #select only the columns we actually need for the analysis 
+  select(
+    practice_code,
+    data_zone, 
+    #rename the messy 'urban_rural6fold2020 to something simple
+    urban_rural_class = urban_rural6fold2020
+  )
+```
+
+So far I have been loading all the data but now I aim to join and analyse Urban vs Rural data from urban/rural 6 (2020), the reasoning as to why this particular column was chosen will be explained later.
+
+```{r}
+# 5 - Joining and analysing Urban vs Rural data 
+# the aim is to: 
+# 1: filter the raw data for NSAIDS again (since summary_data lost the practice codes)
+# 2: Join it with our gp_lookup table 
+# 3: group by Month and Urban/Rural class
+
+urban_rural_summary <- raw_data_cleaned %>% 
+  # 1: filter for NSAIDS + MSK drugs
+  filter(str_starts(bnf_item_code, "100101")) %>% 
+  
+  # 2 Clean up the date
+  mutate(Month = ymd(paste0(paid_date_month, "01"))) %>% 
+  # 3: join with GP lookup table 
+  # we assume the column in raw data is 'gp_practice' and lookup is practice code
+  left_join(gp_lookup, by = c("gp_practice" = "practice_code")) %>% 
+  
+  # filter out any rows where the join failed (e.g. unknown practices)
+  filter(!is.na(urban_rural_class)) %>% 
+  
+  # group by month and the new class 
+  group_by(Month, urban_rural_class) %>% 
+  
+  #count the items
+  summarise(TotalItems = n(), .groups = "drop") 
+  
+  #check the result outside the pipe 
+  print(head(urban_rural_summary))
+```
+The dataset "urban_rural_summary" breaks down prescription counts by month and area type.
+
+The numbers in the "urban_rural_class" column (1 to 6) correspond to the Scottish government 6-fold classification (Scottish Goverment, 2022): 
+
+1: large urban areas (125,000 people and over)
+
+2: other urban areas (from 10,000 to 124,999 people)
+
+3: Accessible small towns (3,000 to 9,999 people that is within a 30 minute drive from a settlement of 10,000 or more)
+
+4: Remote small towns (3,000 to 9,999 people that takes over 30 minutes to drive from a settlement of 10,000 or more)
+
+5: Accessible Rural Areas  (population of less than 3,000 people, and takes up to 30 minutes drive time of a settlement of 10,000 or more)
+
+6: Remote Rural Areas (Areas with a population of less than 3,000 people, and with a drive time of over 30 minutes to a settlement of 10,000 or more)
+
+Now the aim is to plot and see the WFH backlash (the winter peak or lockdown drop) looks in different areas that spans from urban (Class 1) to rural areas (Class 6)
+
+```{r}
+# 6. Visualising Urban vs Rural Trends
+
+# First, let's make the class labels readable for the plot
+urban_rural_plot_data <- urban_rural_summary %>%
+  mutate(
+    class_label = case_when(
+      urban_rural_class == 1 ~ "1: Large Urban",
+      urban_rural_class == 2 ~ "2: Other Urban",
+      urban_rural_class == 3 ~ "3: Accessible Small Towns",
+      urban_rural_class == 4 ~ "4: Remote Small Towns",
+      urban_rural_class == 5 ~ "5: Accessible Rural",
+      urban_rural_class == 6 ~ "6: Remote Rural"
+    )
+  )
+
+# Create the plot
+ggplot(urban_rural_plot_data, aes(x = Month, y = TotalItems, color = class_label)) +
+  
+  # Draw the trend lines
+  geom_line(linewidth = 1) +
+  
+  # Add the lockdown marker
+  geom_vline(xintercept = as.Date("2020-03-23"), linetype = "dashed", color = "red") +
+  
+  # Facet (split) the plot into 6 panels so we can see each trend clearly
+  # 'scales = "free_y"' allows each plot to find its own height, 
+  # which is crucial because cities have a lot more prescriptions than rural areas.
+  facet_wrap(~class_label, scales = "free_y", ncol = 2) +
+  
+  # Clean up the axes and theme
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %y") +
+  theme_minimal() +
+  theme(legend.position = "none") + # We don't need a legend since the titles tell us
+  
+  # Add descriptive titles
+  labs(
+    title = "Impact of Lockdown on NSAID and MSK drug Prescriptions by Area Type",
+    subtitle = "Note: Y-axis scales vary to highlight the trend shape in each area",
+    x = "Month",
+    y = "Total Prescriptions"
+  )
+```
+The summary reveals a clear urban-rural divide. While the lockdown caused a drop in prescriptions across all of Scotland, the effect was severe in large urban areas, which show a sharp "V-shaped" drop. In contrast, Remote Rural areas show a much shallower decline, suggesting that GP access or patient behaviour was less disrupted in remote communities than in major populations areas. 
+ 
+With this in mind, the next steps will involve calculating and measuring the percentage drop in prescriptions for each area type using the first full month of lockdown (April 2020) compared to the same time previous year (April 2019). 
+
+```{r load-table-data, message=FALSE, warning=FALSE}
+#   step 7.0 creating a summary table
+
+# We need to quantify the "Urban Cliff" vs "Rural Dip".
+# Let's compare April 2019 (Normal) vs April 2020 (Lockdown)
+
+table_data <- urban_rural_summary %>%
+  # 1. Filter for just the two months we want to compare
+  filter(Month %in% as.Date(c("2019-04-01", "2020-04-01"))) %>%
+  
+  # 2. Format the date into a text string first
+  # This turns "2019-04-01" into "Apr_2019" automatically.
+  mutate(Month_Label = format(Month, "%b_%Y")) %>% 
+  
+  # 3. Pivot using the new text label
+  select(-Month) %>% # Remove the old date column to avoid confusion
+  pivot_wider(names_from = Month_Label, values_from = TotalItems) %>%
+  
+  # 4. Calculate the percentage change
+  # Now we can just use the column names "Apr_2019" and "Apr_2020" directly!
+  mutate(
+    Change = (Apr_2020 - Apr_2019) / Apr_2019,
+    
+    # Add the human-readable labels
+    Area_Type = case_when(
+      urban_rural_class == 1 ~ "Large Urban Areas",
+      urban_rural_class == 2 ~ "Other Urban Areas",
+      urban_rural_class == 3 ~ "Accessible Small Towns",
+      urban_rural_class == 4 ~ "Remote Small Towns",
+      urban_rural_class == 5 ~ "Accessible Rural",
+      urban_rural_class == 6 ~ "Remote Rural"
+    )
+  ) %>%
+  
+  # 5. Select and reorder
+  ungroup() %>%
+  select(Area_Type, Apr_2019, Apr_2020, Change)
+
+# Part 7.1 time to draw the table
+# No changes needed here, just updated column names
+# this package allows us to create the table necessary to analyse urban and rural areas 
+library(gt) 
+
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "The Lockdown Effect: Urban vs. Rural",
+    subtitle = "Comparison of NSAID & MSK drug Prescriptions in April 2019 vs. April 2020"
+  ) %>%
+  fmt_number(
+    columns = c(Apr_2019, Apr_2020), # Updated names
+    decimals = 0,
+    use_seps = TRUE #adds commas (e.g., 5,000)
+  ) %>%
+  # this next process formats the percentage column
+  fmt_percent(
+    columns = Change,
+    decimals = 1
+  ) %>%
+  #adding "Heatmap" colouring to change the column to highlight the drop 
+  data_color(
+    columns = Change,
+    method = "numeric",
+    palette = "Reds",
+    domain = c(-0.25, 0) # Adjusted domain slightly
+  ) %>%
+  # add a source note at the bottom to credit the original source 
+  tab_source_note(
+    source_note = "Data: Public Health Scotland (BNF 10.1.1)"
+  ) %>%
+  # rename the columns for the final display
+  cols_label(
+    Area_Type = "Area Classification",
+    Apr_2019 = "Apr 2019 (Items)",
+    Apr_2020 = "Apr 2020 (Items)",
+    Change = "% Change"
+  )
+```
+Contrary to the visual impression of a shallow dip in rural areas, the tabular analysis reveals that Remotate Rural areas actually experienced the sharpest relative decline (-14.4%). This suggests that while urban centres had the highest absolute reduction in prescriptions, rural communities were proportionally more affected by the lockdown access restrictions
+
+The final process involves validating the intial hypothesis by comparing NSAIDs (the backlash drug) against a control drug (statins/lipid -regulators)
+
+Which leads to a different hypothesis: 
+if the drop was just people afraid to commute to GPs due to lockdown restrictions both drug classes should drop, if the WFH backlash is in fact real, NSAIDs should rebound harder or behave differently than Statins in the winter. 
+
+```{r load-statin-data, message=FALSE, warning=FALSE, echo=FALSE}
+# Part 8 - Control Group Analysis 
+
+# to validate our findings, we compare NSAIDs to a "Control" drug: 
+# lipid-regulating drugs (BNF chapter 2.12, e.g. Statins)
+# These are chronic medications with no seasonal link and no connection to WFH pain 
+
+# 1. Create the Statin Summary from the raw data
+statin_summary <- raw_data_cleaned %>%
+  # Filter for Lipid-Regulating Drugs (BNF starts with '0212')
+  filter(str_starts(bnf_item_code, "0212")) %>%
+  # Format the date
+  mutate(Month = ymd(paste0(paid_date_month, "01"))) %>%
+  # Group and count
+  group_by(Month) %>%
+  summarise(TotalItems = n()) %>%
+  arrange(Month) %>%
+  # Label it as the Control group
+  mutate(Drug_Type = "Control: Statins")
+
+# 2. Get our existing NSAID Summary ready to join
+nsaid_summary_labelled <- summary_data %>%
+  mutate(Drug_Type = "Target: NSAIDs/MSK")
+
+# 3. Combine them into one dataset for plotting
+comparison_data <- bind_rows(nsaid_summary_labelled, statin_summary)
+
+# make sure to use the scales package 
+# this package allows for the automatic formatting of axis labels with commas making prescription numbers easier to read
+library(scales)
+
+# Part 9. Creating the final comparison plot
+
+# step 1. Create the Plot and store it in 'final_plot'
+# this essentially ensures there is no text dump at the end 
+final_plot <- ggplot(comparison_data, aes(x = Month, y = TotalItems, color = Drug_Type)) +
+  
+  # Lines and Points
+  geom_line(linewidth = 1) +
+  geom_point() +
+  
+  # Lockdown Marker, creates a red line to mark start of COVID lockdown
+  geom_vline(xintercept = as.Date("2020-03-23"), linetype = "dashed", color = "red") +
+  
+  # Facet the plots
+  facet_wrap(~Drug_Type, scales = "free_y", ncol = 1) +
+  
+  # Formatting
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%b %y") +
+  scale_color_manual(values = c("gray40", "#0072B2")) + 
+  theme_minimal() +
+  theme(legend.position = "none") +
+  
+  # Labels
+  labs(
+    title = "The 'Backlash' Test: NSAIDs vs. Control Group",
+    subtitle = "Comparing Pain Meds (Target) against Statins (Control) during Lockdown",
+    y = "Total Monthly Prescriptions",
+    x = "Month"
+  )
+
+# 2. Explicitly print the plot
+# This ensures only the image renders, not the text structure.
+final_plot
+```
+Conclusion:
+The overall analysis successfully addressed the conflicting forces proposed In the introduction: the “increased physical strain” of remote work (Guler et al., 2021; El Kadri Filho and Roberto de Lucca, 2022) versus the “decreased access” to primary (Welsh et al., 2023). The data reveals that the decreased access force initially dominated, causing a majority, V-shaped drop in NSAID and MSK prescriptions across all of Scotland during the first lockdown. However, the subsequent behaviour of the data supports the WFH backlash hypothesis, Unlike the control group (statins), which fluctuated without a clear pattern, NSAID/MSK prescriptions demonstrated a steady recovery, regaining their season winter peak by late 2020. This robust recovery aligns with findings by Welsh et al. (2023), who noted that while total consultations remained low, there was a specific “upturn” in analgesic prescribing from 2020. Additionally, the urban-rural analysis (Scottish Government, 2022) highlighted that while urban centres faced limited GP access, remote rural areas remained more resilient.
+
+Ultimately, this suggests that the ergonomic strain of the pandemic was severe enough to drive prescription demand back to pre-pandemic levels, overriding the system barriers to healthcare access. 
+
+References: 
+
+-El Kadri Filho , F. and Roberto de Lucca, S. (2022). Telework Conditions, Ergonomic and Psychosocial Risks, and Musculoskeletal Problems in the COVID-19 Pandemic. Journal of Occupational and Environmental Medicine, [online] 64(12), pp.e811–e817. doi:https://doi.org/10.1097/jom.0000000000002704.
+
+-Guler,M.A., Guler, K., Güleç, M.G. and Ozdoglar, E. (2021). Working from Home During A Pandemic. Journal of Occupational & Environmental Medicine, [online] 63(9). doi:https://doi.org/10.1097/jom.0000000000002277.
+
+-Public Health Scotland (2019-2021). Prescriptions in the Community - Scottish Health and Social Care Open Data. [online] www.opendata.nhs.scot. Available at: https://www.opendata.nhs.scot/dataset/prescriptions-in-the-community.
+
+-Scottish Government (2022). 2. Overview. [online] www.gov.scot. Available at: https://www.gov.scot/publications/scottish-government-urban-rural-classification-2020/pages/2/.
+
+-Welsh, V.K., Mason, K.J., Bailey, J., Bajpai, R., Jordan, K.P., Mallen, C.D. and Burton, C. (2023). Trends in consultations and prescribing for rheumatic and musculoskeletal diseases: an electronic primary care records study. British Journal of General Practice, [online] 73(736), pp.e858–e866. doi:https://doi.org/10.3399/bjgp.2022.0648.
